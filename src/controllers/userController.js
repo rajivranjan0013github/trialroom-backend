@@ -12,14 +12,20 @@ export const getMe = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { name } = req.body;
+    const body = req.body || {};
+    const updateData = {};
+    
+    if (body.name) updateData.name = body.name;
+
     let newFileIndex = 0;
     const finalProfileUrls = [];
-    const publicDomain = process.env.R2_PUBLIC_DOMAIN.replace(/\/$/, "");
+    const publicDomain = process.env.R2_PUBLIC_DOMAIN?.replace(/\/$/, "") || "";
 
     // 1. Reconstruct the 4-slot array based on the manifest
+    let hasSlots = false;
     for (let i = 0; i < 4; i++) {
-      const slotValue = req.body[`slot_${i}`];
+      const slotValue = body[`slot_${i}`];
+      if (slotValue) hasSlots = true;
 
       if (slotValue === 'NEW_FILE') {
         if (req.files && req.files[newFileIndex]) {
@@ -31,12 +37,14 @@ export const updateProfile = async (req, res) => {
       }
     }
 
+    if (hasSlots) {
+      updateData.profileSetup = finalProfileUrls;
+    }
+
     // 2. UPDATE DATABASE ONLY
-    // We purposefully DO NOT delete files from R2 anymore, 
-    // ensuring images stay in the bucket for history/other uses.
     const user = await User.findByIdAndUpdate(
       req.user, 
-      { name, profileSetup: finalProfileUrls },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
 
