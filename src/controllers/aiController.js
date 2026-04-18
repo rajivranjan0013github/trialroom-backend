@@ -1,4 +1,4 @@
-import { generateFittingImageMulti, detectFashionItems } from '../services/geminiService.js';
+import { generateFittingImageMulti, detectFashionItems, removeBackgroundGemini } from '../services/geminiService.js';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../utils/s3Config.js';
 import Fitting from '../models/Fitting.js';
@@ -87,5 +87,69 @@ export const detectOutfits = async (req, res) => {
   } catch (error) {
     console.error('Detection Error:', error);
     res.status(500).json({ status: 'Error', message: 'Detection failed', detail: error.message });
+  }
+};
+
+export const removeBackground = async (req, res) => {
+  try {
+    const originalFile = req.file;
+    if (!originalFile) {
+      return res.status(400).json({ status: 'Error', message: 'Image is required' });
+    }
+
+    // 1. Process Background Removal using Gemini Prompt
+    console.log('--- REQ: removeBackground hit ---');
+    console.log('✨ Removing background and enhancing person with Gemini...');
+    const processedBuffer = await removeBackgroundGemini(originalFile.buffer, originalFile.mimetype);
+
+    // 2. Upload processed image to R2
+    const fileName = `processed/${Date.now()}-no-bg.png`;
+    await s3Client.send(new PutObjectCommand({
+      Bucket: bucketName,
+      Key: fileName,
+      Body: processedBuffer,
+      ContentType: 'image/png'
+    }));
+
+    const resultUrl = `${process.env.R2_PUBLIC_DOMAIN.replace(/\/$/, "")}/${fileName}`;
+
+    res.json({
+      status: 'Success',
+      url: resultUrl
+    });
+  } catch (error) {
+    console.error('Background Removal Error:', error);
+    res.status(500).json({ status: 'Error', message: 'Background removal failed', detail: error.message });
+  }
+};
+export const modelifyController = async (req, res) => {
+  try {
+    const originalFile = req.file;
+    if (!originalFile) {
+      return res.status(400).json({ status: 'Error', message: 'Image is required' });
+    }
+
+    // 1. Process with Gemini (Enhance + Remove BG in one step)
+    console.log('✨ Transforming into professional model with direct Gemini output...');
+    const processedBuffer = await removeBackgroundGemini(originalFile.buffer, originalFile.mimetype);
+
+    // 2. Upload to R2
+    const fileName = `modelified/${Date.now()}-model.png`;
+    await s3Client.send(new PutObjectCommand({
+      Bucket: bucketName,
+      Key: fileName,
+      Body: processedBuffer,
+      ContentType: 'image/png'
+    }));
+
+    const resultUrl = `${process.env.R2_PUBLIC_DOMAIN.replace(/\/$/, "")}/${fileName}`;
+
+    res.json({
+      status: 'Success',
+      url: resultUrl
+    });
+  } catch (error) {
+    console.error('Modelify Error:', error);
+    res.status(500).json({ status: 'Error', message: 'Modelify failed', detail: error.message });
   }
 };

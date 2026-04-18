@@ -35,13 +35,22 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Register Routes
+app.use('/api/v1', aiRoutes); // Priority
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1', aiRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
   res.json({ status: 'UP', timestamp: new Date() });
+});
+
+// JSON 404 Handler - Strengthened (Express 5 compatible)
+app.use((req, res) => {
+  res.status(404).json({ 
+    status: 'Error', 
+    message: `Route ${req.method} ${req.originalUrl} not found`,
+    hint: 'Ensure you are using the correct method and path'
+  });
 });
 
 // Error handling middleware
@@ -59,5 +68,6 @@ app.listen(PORT, () => {
   🚀 TrailRoom Backend Refactored & Running!
   📡 Port: ${PORT}
   🌍 Environment: ${process.env.NODE_ENV}
+  ✨ Routes Registered: /api/v1/remove-bg, /api/v1/modelify, etc.
   `);
 });

@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import sharp from 'sharp';
 import fs from 'fs/promises';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -59,7 +58,7 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles) => {
       }
     });
 
-    const prompt = `Copy identity from the first image that is mine. Copy fashion style from the second image. Now give me a new image. Make sure to maintain character consistency of the first image. Must give me the image with white background.`;
+    const prompt = `Copy identity from the first image that is mine. Copy fashion style from the second image. Now give me a new image. Make sure to maintain character consistency of the first image. Must give me the image with white background in 1080x1440 resolution.`;
 
     const result = await model.generateContent([
       prompt,
@@ -72,17 +71,9 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles) => {
 
     const rawBuffer = Buffer.from(generatedPart.inlineData.data, 'base64');
 
-    // 3. Resize to 1080×1440, centered on a WHITE canvas (no bg removal)
-    console.log(`Resizing to ${OUTPUT_WIDTH}×${OUTPUT_HEIGHT}...`);
-    const finalBuffer = await sharp(rawBuffer)
-      .resize(OUTPUT_WIDTH, OUTPUT_HEIGHT, {
-        fit: 'contain',
-        background: { r: 255, g: 255, b: 255, alpha: 1 }
-      })
-      .png()
-      .toBuffer();
-
-    return finalBuffer;
+    // 3. Return the buffer directly from Gemini
+    console.log(`Returning direct Gemini output...`);
+    return rawBuffer;
   } catch (error) {
     console.error('Gemini Style Transfer Error:', error);
     throw error;
@@ -126,6 +117,110 @@ export const detectFashionItems = async (fileBuffer, mimeType) => {
     return JSON.parse(text);
   } catch (error) {
     console.error('Gemini Detection Error:', error);
+    throw error;
+  }
+};
+export const modelifyPerson = async (fileBuffer, mimeType) => {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-image', // Proven to work in this codebase
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      }
+    });
+
+    const prompt = `Transform the person in this photo into a professional fashion model. Enhance their pose to a more confident, professional 'model pose' while strictly maintaining their natural body symmetry and proportions. Crucially, keep the person's facial identity and key features exactly the same as the original. Output the result on a solid white background.`;
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: fileBuffer.toString('base64'),
+          mimeType: mimeType
+        }
+      }
+    ]);
+
+    const generatedPart = result.response.candidates[0].content.parts.find(p => p.inlineData);
+    if (!generatedPart) throw new Error('Gemini did not return a generated image');
+
+    return Buffer.from(generatedPart.inlineData.data, 'base64');
+  } catch (error) {
+    console.error('Gemini Modelify Error:', error);
+    throw error;
+  }
+};
+
+export const getSegmentationMask = async (fileBuffer, mimeType) => {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3-flash-preview', // Proven to work in this codebase
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const prompt = `Give the segmentation mask for the entire person in this image. 
+    Output a JSON object where the entry contains the 2D bounding box in the key 'box_2d', the segmentation mask in key 'mask', and the text label 'person' in the key 'label'. 
+    The mask should be a base64 encoded PNG probability map.`;
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: fileBuffer.toString('base64'),
+          mimeType: mimeType
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    const data = JSON.parse(response.text());
+    
+    // Sometimes Gemini returns a list
+    const maskData = Array.isArray(data) ? data[0] : (data.items ? data.items[0] : data);
+    
+    if (!maskData || !maskData.mask) {
+      throw new Error('No segmentation mask returned from Gemini');
+    }
+
+    return {
+      maskBase64: maskData.mask,
+      box_2d: maskData.box_2d
+    };
+  } catch (error) {
+    console.error('Gemini Segmentation Error:', error);
+    throw error;
+  }
+};
+
+export const removeBackgroundGemini = async (fileBuffer, mimeType) => {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-image', // Model that supports IMAGE modality output
+      generationConfig: {
+        responseModalities: ['IMAGE'],
+      }
+    });
+
+    const prompt = `Extract the person from this photo and transform them into a professional fashion model. Enhance their pose to a more confident, professional 'model pose' while strictly maintaining their natural body symmetry, proportions, and facial identity. Return the resulting enhanced model on a transparent background.`;
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: fileBuffer.toString('base64'),
+          mimeType: mimeType
+        }
+      }
+    ]);
+
+    const generatedPart = result.response.candidates[0].content.parts.find(p => p.inlineData);
+    if (!generatedPart) throw new Error('Gemini did not return an image for background removal');
+
+    return Buffer.from(generatedPart.inlineData.data, 'base64');
+  } catch (error) {
+    console.error('Gemini BG Removal Error:', error);
     throw error;
   }
 };
