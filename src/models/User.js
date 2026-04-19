@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema({
     ],
     default: []
   },
+  height: {
+    type: Number,
+    min: [0, 'Height cannot be negative']
+  },
+  weight: {
+    type: Number,
+    min: [0, 'Weight cannot be negative']
+  },
   createdAt: {
     type: Date,
     default: Date.now

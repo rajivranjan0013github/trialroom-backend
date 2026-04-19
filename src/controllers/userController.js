@@ -1,5 +1,14 @@
 import User from '../models/User.js';
 
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({ createdAt: -1 });
+    res.json({ status: 'Success', count: users.length, data: users });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user);
@@ -16,6 +25,8 @@ export const updateProfile = async (req, res) => {
     const updateData = {};
     
     if (body.name) updateData.name = body.name;
+    if (body.height) updateData.height = Number(body.height);
+    if (body.weight) updateData.weight = Number(body.weight);
 
     let newFileIndex = 0;
     const finalProfileUrls = [];
