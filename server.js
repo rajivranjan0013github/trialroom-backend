@@ -17,7 +17,8 @@ const PORT = process.env.PORT || 5001;
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || origin.startsWith('http://localhost')) {
+    // Allow no-origin (React Native native fetch) and all local network origins
+    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -28,6 +29,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve local files for mock/dev testing (avoids R2 upload round-trips)
+app.use('/static', express.static(process.cwd()));
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)

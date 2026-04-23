@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI, { toFile } from 'openai';
+import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -10,6 +12,32 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// ── Detection Cache (saves Gemini API costs during dev/testing) ──
+const CACHE_DIR = path.join(process.cwd(), '.cache', 'detections');
+
+async function getCachedDetection(hash) {
+  try {
+    const filePath = path.join(CACHE_DIR, `${hash}.json`);
+    const data = await fs.readFile(filePath, 'utf-8');
+    console.log(`[Cache] HIT — returning cached detection for ${hash}`);
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+async function saveCachedDetection(hash, result) {
+  try {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+    const filePath = path.join(CACHE_DIR, `${hash}.json`);
+    await fs.writeFile(filePath, JSON.stringify(result, null, 2));
+    console.log(`[Cache] SAVED detection result for ${hash}`);
+  } catch (err) {
+    console.warn('[Cache] Failed to save:', err.message);
+  }
+}
 
 const OUTPUT_WIDTH = 1080;
 const OUTPUT_HEIGHT = 1440;
@@ -25,63 +53,63 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles) => {
       return await fs.readFile(filePath);
     }
 
-    // 1. Fetch person reference images (user's body/face)
-    const personPrompts = await Promise.all(personUrls.map(async (url) => {
+    // 1. Fetch person reference images from URLs
+    const personBuffers = await Promise.all(personUrls.map(async (url) => {
       const response = await fetch(url);
       if (!response.ok) return null;
       const arrayBuffer = await response.arrayBuffer();
-      return {
-        inlineData: {
-          data: Buffer.from(arrayBuffer).toString('base64'),
-          mimeType: response.headers.get('content-type') || 'image/jpeg'
-        }
-      };
+      const mimeType = response.headers.get('content-type') || 'image/jpeg';
+      return { buffer: Buffer.from(arrayBuffer), mimeType };
     }));
-    const validPersonImages = personPrompts.filter(p => p !== null);
+    const validPersonImages = personBuffers.filter(p => p !== null);
 
     if (validPersonImages.length === 0) {
       throw new Error('No valid person reference images could be fetched');
     }
 
-    // 2. Prepare outfit/model images (fashion references)
-    const outfitPrompts = outfitFiles.map(file => ({
-      inlineData: {
-        data: file.buffer.toString('base64'),
-        mimeType: file.mimetype
-      }
-    }));
+    // 2. Convert all images to OpenAI File objects
+    const personFiles = await Promise.all(
+      validPersonImages.map((img, i) =>
+        toFile(img.buffer, `person_${i}.jpg`, { type: img.mimeType })
+      )
+    );
+    const outfitFileObjects = await Promise.all(
+      outfitFiles.map((file, i) =>
+        toFile(file.buffer, `outfit_${i}.png`, { type: file.mimetype })
+      )
+    );
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-image',
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      }
+    const prompt = `Copy identity from the first image that is mine. Copy fashion style from the second image. Now give me a new image. Make sure to maintain character consistency of the first image. Must give me the image with white background.`;
+
+    console.log('[OpenAI] Calling gpt-image-1 for virtual try-on...');
+    const response = await openai.images.edit({
+      model: 'gpt-image-2',
+      image: [...personFiles, ...outfitFileObjects],
+      prompt,
+      n: 1,
+      size: '1024x1536',
     });
 
-    const prompt = `Copy identity from the first image that is mine. Copy fashion style from the second image. Now give me a new image. Make sure to maintain character consistency of the first image. Must give me the image with white background in 1080x1440 resolution.`;
+    const b64 = response.data[0].b64_json;
+    const buffer = Buffer.from(b64, 'base64');
+    fs.writeFileSync('output-image-gpt.png', buffer);
+    if (!b64) throw new Error('OpenAI did not return an image');
 
-    const result = await model.generateContent([
-      prompt,
-      ...validPersonImages,
-      ...outfitPrompts
-    ]);
-
-    const generatedPart = result.response.candidates[0].content.parts.find(p => p.inlineData);
-    if (!generatedPart) throw new Error('Gemini did not return a generated image');
-
-    const rawBuffer = Buffer.from(generatedPart.inlineData.data, 'base64');
-
-    // 3. Return the buffer directly from Gemini
-    console.log(`Returning direct Gemini output...`);
-    return rawBuffer;
+    console.log('[OpenAI] gpt-image-1 generation complete');
+    return buffer;
   } catch (error) {
-    console.error('Gemini Style Transfer Error:', error);
+    console.error('OpenAI Style Transfer Error:', error);
     throw error;
   }
 };
 
 export const detectFashionItems = async (fileBuffer, mimeType) => {
   try {
+    // Check cache first
+    const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    const cached = await getCachedDetection(hash);
+    if (cached) return cached;
+
     const model = genAI.getGenerativeModel({
       model: 'gemini-3-flash-preview',
       generationConfig: {
@@ -89,16 +117,19 @@ export const detectFashionItems = async (fileBuffer, mimeType) => {
       }
     });
 
-    const prompt = `Return a JSON list of fashion items and accessories detected in the image. 
-    Include: outfits, neckless, watch, footwear, hats, glasses, bags, etc.
-    For each item, provide:
-    - "label": a short descriptive name (e.g., "Silver Watch", "Red Dress")
-    - "box_2d": [ymin, xmin, ymax, xmax] coordinates normalized to 1000.
-    
+    const prompt = `Return a JSON list of distinct fashion items and accessories detected in the image.
+    Include: outfits, necklace, watch, footwear, hats, glasses, bags, etc.
+    Rules:
+    - Treat paired items as ONE entry (e.g. both shoes = one "Sandals" entry, both socks = one entry).
+    - Never list the same item type more than once.
+    - Use a short item-type label only, no colors (e.g. "Sneakers", "Watch", "Jeans", "Sunglasses").
+    - "point": [y, x] the single most visually prominent pixel ON the item surface, normalized to 0-1000. (e.g. center of a shoe's toe box, buckle of a watch, middle of a shirt's chest area).
+    - "scale": a number from 0 to 1000 representing how large the item appears in the image. It is roughly the radius around the point that covers the item. Small items like a watch ≈ 40-80, medium items like shoes ≈ 100-200, large items like a jacket ≈ 250-450.
+
     Format:
     {
       "items": [
-        { "label": "string", "box_2d": [number, number, number, number] }
+        { "label": "string", "point": [number, number], "scale": number }
       ]
     }`;
 
@@ -114,7 +145,12 @@ export const detectFashionItems = async (fileBuffer, mimeType) => {
 
     const response = await result.response;
     const text = response.text();
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+
+    // Save to cache
+    await saveCachedDetection(hash, parsed);
+
+    return parsed;
   } catch (error) {
     console.error('Gemini Detection Error:', error);
     throw error;
@@ -176,10 +212,10 @@ export const getSegmentationMask = async (fileBuffer, mimeType) => {
 
     const response = await result.response;
     const data = JSON.parse(response.text());
-    
+
     // Sometimes Gemini returns a list
     const maskData = Array.isArray(data) ? data[0] : (data.items ? data.items[0] : data);
-    
+
     if (!maskData || !maskData.mask) {
       throw new Error('No segmentation mask returned from Gemini');
     }

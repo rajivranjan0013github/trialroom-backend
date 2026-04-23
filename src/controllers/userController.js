@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Fitting from '../models/Fitting.js';
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -16,6 +17,20 @@ export const getMe = async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user;
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) return res.status(404).json({ status: 'Error', message: 'User not found' });
+
+    await Fitting.deleteMany({ user: userId });
+
+    res.json({ status: 'Success', message: 'Account deleted' });
+  } catch (error) {
+    res.status(500).json({ status: 'Error', message: error.message });
   }
 };
 
