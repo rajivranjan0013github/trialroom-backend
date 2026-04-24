@@ -11,6 +11,8 @@ export const generateFitting = async (req, res) => {
     const urls = JSON.parse(personUrls || '[]');
     const selectedItems = JSON.parse(req.body.selectedItems || '[]');
     const detectedItems = JSON.parse(req.body.detectedItems || '[]');
+    const title = req.body.title || 'Virtual Look Synthesis';
+    const category = req.body.category || 'Outfit';
 
     if (urls.length === 0 || !outfitFiles || outfitFiles.length === 0) {
       return res.status(400).json({ status: 'Error', message: 'Person References and Outfit Images are required' });
@@ -48,6 +50,8 @@ export const generateFitting = async (req, res) => {
       outfitImages: outfitUrls,
       detectedItems,
       selectedItems,
+      title,
+      category,
       resultImage: resultUrl,
     });
 
@@ -84,6 +88,8 @@ export const detectOutfits = async (req, res) => {
     res.json({
       status: 'Success',
       data: detectionResult.items,
+      suggestedTitle: detectionResult.suggestedTitle,
+      category: detectionResult.category,
     });
   } catch (error) {
     console.error('Detection Error:', error);

@@ -120,6 +120,8 @@ export const detectFashionItems = async (fileBuffer, mimeType) => {
 
     Format:
     {
+      "suggestedTitle": "string",
+      "category": "Outfit" | "Top" | "Bottom" | "Dress",
       "items": [
         { "label": "string", "point": [number, number], "scale": number }
       ]

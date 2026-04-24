@@ -20,6 +20,8 @@ const fittingSchema = new mongoose.Schema({
     scale: Number,
   }],
   selectedItems: [String],
+  title: String,
+  category: String,
   resultImage: {
     type: String, // Final AI result
     required: true
