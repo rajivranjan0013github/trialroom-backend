@@ -39,20 +39,9 @@ async function saveCachedDetection(hash, result) {
   }
 }
 
-const OUTPUT_WIDTH = 1080;
-const OUTPUT_HEIGHT = 1440;
 
-// Set MOCK_MODE=true in .env to use local output-image.png instead of calling Gemini
-const MOCK_MODE = process.env.MOCK_MODE === 'true';
-
-export const generateFittingImageMulti = async (personUrls, outfitFiles) => {
+export const generateFittingImageMulti = async (personUrls, outfitFiles, selectedItems = []) => {
   try {
-    if (MOCK_MODE) {
-      console.log('🧪 MOCK MODE: Returning local output-image.png');
-      const filePath = path.join(process.cwd(), 'output-image.png');
-      return await fs.readFile(filePath);
-    }
-
     // 1. Fetch person reference images from URLs
     const personBuffers = await Promise.all(personUrls.map(async (url) => {
       const response = await fetch(url);
@@ -79,7 +68,10 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles) => {
       )
     );
 
-    const prompt = `Copy identity from the first image that is mine. Copy fashion style from the second image. Now give me a new image. Make sure to maintain character consistency of the first image. Must give me the image with white background.`;
+    const itemList = selectedItems.join(', ');
+    const prompt = selectedItems.length > 0
+      ? `You are a virtual try-on AI. The first image is the person — preserve their face, exact skin tone, body, and identity exactly. Do not lighten, darken, or alter their skin tone in any way. From the second image, copy the pose and apply ONLY these specific clothing items to the person: ${itemList}. Do not change any other part of their outfit. Output a realistic full-body photo on a white background.`
+      : `You are a virtual try-on AI. The first image is the person — preserve their face, exact skin tone, body, and identity exactly. Do not lighten, darken, or alter their skin tone in any way. From the second image, copy the complete outfit style and the pose. Output a realistic full-body photo on a white background.`;
 
     console.log('[OpenAI] Calling gpt-image-1 for virtual try-on...');
     const response = await openai.images.edit({
@@ -88,12 +80,12 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles) => {
       prompt,
       n: 1,
       size: '1024x1536',
+      quality: "low"
     });
 
     const b64 = response.data[0].b64_json;
-    const buffer = Buffer.from(b64, 'base64');
-    fs.writeFileSync('output-image-gpt.png', buffer);
     if (!b64) throw new Error('OpenAI did not return an image');
+    const buffer = Buffer.from(b64, 'base64');
 
     console.log('[OpenAI] gpt-image-1 generation complete');
     return buffer;

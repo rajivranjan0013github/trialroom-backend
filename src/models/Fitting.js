@@ -11,9 +11,15 @@ const fittingSchema = new mongoose.Schema({
     required: true
   },
   outfitImages: {
-    type: [String], // Array of all garment URLs used (Real URLs from R2)
+    type: [String],
     required: true
   },
+  detectedItems: [{
+    label: String,
+    point: [Number],
+    scale: Number,
+  }],
+  selectedItems: [String],
   resultImage: {
     type: String, // Final AI result
     required: true
