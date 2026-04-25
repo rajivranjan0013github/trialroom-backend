@@ -150,3 +150,20 @@ export const modelifyController = async (req, res) => {
     res.status(500).json({ status: 'Error', message: 'Modelify failed', detail: error.message });
   }
 };
+export const toggleFavorite = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fitting = await Fitting.findOne({ _id: id, user: req.user });
+    
+    if (!fitting) {
+      return res.status(404).json({ status: 'Error', message: 'Fitting not found' });
+    }
+
+    fitting.isFavorite = !fitting.isFavorite;
+    await fitting.save();
+
+    res.json({ status: 'Success', isFavorite: fitting.isFavorite });
+  } catch (error) {
+    res.status(500).json({ status: 'Error', message: error.message });
+  }
+};

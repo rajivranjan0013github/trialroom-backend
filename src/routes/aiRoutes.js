@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateFitting, getFittingHistory, detectOutfits, removeBackground, modelifyController } from '../controllers/aiController.js';
+import { generateFitting, getFittingHistory, detectOutfits, removeBackground, modelifyController, toggleFavorite } from '../controllers/aiController.js';
 import auth from '../middleware/auth.js';
 import multer from 'multer';
 
@@ -12,5 +12,6 @@ router.post('/detect-demo', memoryUpload.single('outfitImage'), detectOutfits);
 router.post('/remove-bg', memoryUpload.single('image'), removeBackground);
 router.post('/modelify', memoryUpload.single('image'), modelifyController);
 router.get('/history', auth, getFittingHistory);
+router.post('/history/:id/favorite', auth, toggleFavorite);
 
 export default router;

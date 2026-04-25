@@ -26,6 +26,10 @@ const fittingSchema = new mongoose.Schema({
     type: String, // Final AI result
     required: true
   },
+  isFavorite: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

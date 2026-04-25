@@ -38,24 +38,33 @@ export const updateProfile = async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = {};
-    
+    const publicDomain = process.env.R2_PUBLIC_DOMAIN?.replace(/\/$/, "") || "";
+
+    // req.files is now { images: [...], avatar: [...] } from upload.fields()
+    const imageFiles = req.files?.images ?? [];
+    const avatarFile = req.files?.avatar?.[0] ?? null;
+
     if (body.name) updateData.name = body.name;
     if (body.height) updateData.height = Number(body.height);
     if (body.weight) updateData.weight = Number(body.weight);
 
+    // Handle avatar upload
+    if (avatarFile) {
+      updateData.avatar = `${publicDomain}/${avatarFile.key}`;
+    }
+
+    // Reconstruct the 4-slot profileSetup array from the slot manifest
     let newFileIndex = 0;
     const finalProfileUrls = [];
-    const publicDomain = process.env.R2_PUBLIC_DOMAIN?.replace(/\/$/, "") || "";
-
-    // 1. Reconstruct the 4-slot array based on the manifest
     let hasSlots = false;
+
     for (let i = 0; i < 4; i++) {
       const slotValue = body[`slot_${i}`];
       if (slotValue) hasSlots = true;
 
       if (slotValue === 'NEW_FILE') {
-        if (req.files && req.files[newFileIndex]) {
-          finalProfileUrls.push(`${publicDomain}/${req.files[newFileIndex].key}`);
+        if (imageFiles[newFileIndex]) {
+          finalProfileUrls.push(`${publicDomain}/${imageFiles[newFileIndex].key}`);
           newFileIndex++;
         }
       } else if (slotValue && slotValue !== 'EMPTY' && slotValue.startsWith('http')) {
@@ -67,9 +76,8 @@ export const updateProfile = async (req, res) => {
       updateData.profileSetup = finalProfileUrls;
     }
 
-    // 2. UPDATE DATABASE ONLY
     const user = await User.findByIdAndUpdate(
-      req.user, 
+      req.user,
       { $set: updateData },
       { new: true, runValidators: true }
     );
