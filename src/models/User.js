@@ -41,6 +41,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: [0, 'Weight cannot be negative']
   },
+  fcmToken: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now
