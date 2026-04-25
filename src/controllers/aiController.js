@@ -1,4 +1,4 @@
-import { generateFittingImageMulti, detectFashionItems, removeBackgroundGemini } from '../services/geminiService.js';
+import { generateFittingImageMulti, detectFashionItems, removeBackgroundGemini, generateStandingAvatarOpenAI } from '../services/geminiService.js';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../utils/s3Config.js';
 import Fitting from '../models/Fitting.js';
@@ -150,6 +150,25 @@ export const modelifyController = async (req, res) => {
     res.status(500).json({ status: 'Error', message: 'Modelify failed', detail: error.message });
   }
 };
+export const generateAvatar = async (req, res) => {
+  try {
+    const file = req.file;
+    console.log("henrsate avatr");
+    if (!file) {
+      return res.status(400).json({ status: 'Error', message: 'Reference image is required' });
+    }
+
+    console.log('✨ Generating standing avatar for user:', req.user);
+    const generatedBuffer = await generateStandingAvatarOpenAI(file.buffer, file.mimetype);
+    const imageBase64 = generatedBuffer.toString('base64');
+
+    res.json({ status: 'Success', imageBase64 });
+  } catch (error) {
+    console.error('Avatar Generation Error:', error);
+    res.status(500).json({ status: 'Error', message: 'Avatar generation failed', detail: error.message });
+  }
+};
+
 export const toggleFavorite = async (req, res) => {
   try {
     const { id } = req.params;

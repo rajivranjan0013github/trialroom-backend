@@ -40,6 +40,60 @@ async function saveCachedDetection(hash, result) {
 }
 
 
+const STANDING_POSE_PROMPT = `Using the provided reference image, generate a realistic full-body image of the same person.
+
+Maintain:
+- Same face, identity, and body proportions (height, weight, physique)
+- Same outfit and clothing details (exact colors, fit, fabric, accessories)
+
+Modify:
+- Convert pose into a natural standing position
+- Posture should be straight, upright, and confident (good posture)
+- Shoulders relaxed, spine aligned
+- Weight slightly shifted to one leg for a casual stance
+
+Pose details:
+- Arms relaxed (one arm naturally by the side or lightly bent)
+- Hands in a natural position (not stiff or posed)
+- Legs slightly apart or one leg slightly forward for balance
+- Head slightly tilted or facing forward
+
+Expression:
+- Soft, casual expression with a slight natural smile (not serious)
+
+Style:
+- Realistic, candid photography feel (not studio stiff)
+- Preserve lighting and background if possible
+- No distortion, no change in identity or clothing
+
+Quality:
+- High detail, sharp, natural skin texture, realistic proportions`;
+
+export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
+  try {
+    const imageFile = await toFile(fileBuffer, 'reference.jpg', { type: mimeType });
+
+    console.log('[OpenAI] Generating standing avatar via gpt-image-2...');
+    const response = await openai.images.edit({
+      model: 'gpt-image-2',
+      image: [imageFile],
+      prompt: STANDING_POSE_PROMPT,
+      n: 1,
+      size: '1024x1024',
+      quality: 'low',
+    });
+
+    const b64 = response.data[0].b64_json;
+    if (!b64) throw new Error('OpenAI did not return an image');
+
+    console.log('[OpenAI] Standing avatar generation complete');
+    return Buffer.from(b64, 'base64');
+  } catch (error) {
+    console.error('Standing Avatar Generation Error:', error);
+    throw error;
+  }
+};
+
 export const generateFittingImageMulti = async (personUrls, outfitFiles, selectedItems = []) => {
   try {
     // 1. Fetch person reference images from URLs
