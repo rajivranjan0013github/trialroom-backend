@@ -34,6 +34,18 @@ export const deleteAccount = async (req, res) => {
   }
 };
 
+export const saveFCMToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ status: 'Error', message: 'token is required' });
+
+    await User.findByIdAndUpdate(req.user, { $set: { fcmToken: token } });
+    res.json({ status: 'Success' });
+  } catch (error) {
+    res.status(500).json({ status: 'Error', message: error.message });
+  }
+};
+
 export const updateProfile = async (req, res) => {
   try {
     const body = req.body || {};
