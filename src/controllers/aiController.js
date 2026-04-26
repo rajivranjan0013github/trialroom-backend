@@ -2,6 +2,8 @@ import { generateFittingImageMulti, detectFashionItems, removeBackgroundGemini, 
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../utils/s3Config.js';
 import Fitting from '../models/Fitting.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 export const generateFitting = async (req, res) => {
   try {
@@ -153,13 +155,26 @@ export const modelifyController = async (req, res) => {
 export const generateAvatar = async (req, res) => {
   try {
     const file = req.file;
-    console.log("henrsate avatr");
     if (!file) {
       return res.status(400).json({ status: 'Error', message: 'Reference image is required' });
     }
 
-    console.log('✨ Generating standing avatar for user:', req.user);
+    /* 
+    console.log('[Avatar] Generation started for user:', req.user, '| Image size:', file.size, 'bytes');
     const generatedBuffer = await generateStandingAvatarOpenAI(file.buffer, file.mimetype);
+    console.log('[Avatar] Generation complete | Output size:', generatedBuffer.length, 'bytes');
+    */
+
+    console.log('[Avatar] Testing Mode: Simulating 20s delay...');
+    // Simulate generation time
+    await new Promise(resolve => setTimeout(resolve, 20000));
+
+    console.log('[Avatar] Testing Mode: Using local output-image.png');
+    // For testing: read local file instead of calling AI
+    const imagePath = path.join(process.cwd(), 'img1.jpeg');
+    const generatedBuffer = await fs.readFile(imagePath);
+    
+    console.log('[Avatar] Generation complete (from local file) | Output size:', generatedBuffer.length, 'bytes');
     const imageBase64 = generatedBuffer.toString('base64');
 
     res.json({ status: 'Success', imageBase64 });
