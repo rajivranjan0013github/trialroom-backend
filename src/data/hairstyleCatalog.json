@@ -1,0 +1,272 @@
+[
+  {
+    "id": "buzz_cut",
+    "name": "Buzz Cut",
+    "category": "short",
+    "gender": "all",
+    "aiPrompt": "very short buzz cut with uniform length all over, military-style clean fade",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "crew_cut",
+    "name": "Crew Cut",
+    "category": "short",
+    "gender": "all",
+    "aiPrompt": "classic crew cut with short sides and slightly longer top, neat and clean",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "caesar_cut",
+    "name": "Caesar Cut",
+    "category": "short",
+    "gender": "all",
+    "aiPrompt": "Caesar cut with short horizontal fringe across the forehead, short uniform length",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "french_crop",
+    "name": "French Crop",
+    "category": "short",
+    "gender": "all",
+    "aiPrompt": "French crop with textured top, short faded sides and cropped fringe",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "undercut",
+    "name": "Undercut",
+    "category": "short",
+    "gender": "all",
+    "aiPrompt": "disconnected undercut with shaved sides, longer hair on top swept to one side",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "pixie_cut",
+    "name": "Pixie Cut",
+    "category": "short",
+    "gender": "female",
+    "aiPrompt": "modern pixie cut with short back and sides, slightly longer on top with soft texture",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "short_bob",
+    "name": "Short Bob",
+    "category": "short",
+    "gender": "female",
+    "aiPrompt": "chin-length short bob cut, straight and sleek with a blunt edge",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "textured_quiff",
+    "name": "Textured Quiff",
+    "category": "short",
+    "gender": "male",
+    "aiPrompt": "modern textured quiff with volume on top, short faded sides, natural messy finish",
+    "cardColor": "#FF6B6B",
+    "cardBg": "#FFF0F0"
+  },
+  {
+    "id": "lob",
+    "name": "Lob (Long Bob)",
+    "category": "medium",
+    "gender": "female",
+    "aiPrompt": "lob long bob just below the shoulders, sleek and straight with a center part",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "shoulder_waves",
+    "name": "Shoulder Waves",
+    "category": "medium",
+    "gender": "female",
+    "aiPrompt": "shoulder-length wavy hair with loose natural waves and soft texture",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "wolf_cut",
+    "name": "Wolf Cut",
+    "category": "medium",
+    "gender": "all",
+    "aiPrompt": "wolf cut with choppy layered ends, face-framing pieces, and wispy curtain bangs",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "curtain_bangs",
+    "name": "Curtain Bangs",
+    "category": "medium",
+    "gender": "all",
+    "aiPrompt": "medium-length hair with curtain bangs parted in the middle framing the face, soft waves",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "shag_cut",
+    "name": "Shag Cut",
+    "category": "medium",
+    "gender": "all",
+    "aiPrompt": "70s inspired shag cut with lots of layers, choppy ends, and feathered texture",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "c_curl_bob",
+    "name": "C-Curl Bob",
+    "category": "medium",
+    "gender": "female",
+    "aiPrompt": "sleek C-curl bob with ends curled inward, smooth and polished finish",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "messy_bun_medium",
+    "name": "Messy Bun",
+    "category": "medium",
+    "gender": "female",
+    "aiPrompt": "casual messy bun updo with loose face-framing tendrils and a relaxed natural look",
+    "cardColor": "#4ECDC4",
+    "cardBg": "#E8FAF9"
+  },
+  {
+    "id": "long_straight",
+    "name": "Long Straight",
+    "category": "long",
+    "gender": "all",
+    "aiPrompt": "long straight silky hair past the shoulders with a clean center part, sleek and polished",
+    "cardColor": "#6BCB77",
+    "cardBg": "#EDFAEF"
+  },
+  {
+    "id": "long_wavy",
+    "name": "Long Wavy",
+    "category": "long",
+    "gender": "all",
+    "aiPrompt": "long flowing wavy hair with beachy loose waves past the shoulders",
+    "cardColor": "#6BCB77",
+    "cardBg": "#EDFAEF"
+  },
+  {
+    "id": "long_curly",
+    "name": "Long Curly",
+    "category": "long",
+    "gender": "all",
+    "aiPrompt": "long bouncy curly hair with defined ringlet curls past the shoulders",
+    "cardColor": "#6BCB77",
+    "cardBg": "#EDFAEF"
+  },
+  {
+    "id": "beach_waves",
+    "name": "Beach Waves",
+    "category": "long",
+    "gender": "all",
+    "aiPrompt": "long beach waves with effortless tousled texture and sun-kissed natural look",
+    "cardColor": "#6BCB77",
+    "cardBg": "#EDFAEF"
+  },
+  {
+    "id": "long_layers",
+    "name": "Long Layers",
+    "category": "long",
+    "gender": "all",
+    "aiPrompt": "long layered hair with face-framing layers and movement throughout",
+    "cardColor": "#6BCB77",
+    "cardBg": "#EDFAEF"
+  },
+  {
+    "id": "half_up",
+    "name": "Half-Up Twist",
+    "category": "long",
+    "gender": "female",
+    "aiPrompt": "long hair in a half-up half-down style with a twisted top section and loose waves below",
+    "cardColor": "#6BCB77",
+    "cardBg": "#EDFAEF"
+  },
+  {
+    "id": "afro",
+    "name": "Afro",
+    "category": "textured",
+    "gender": "all",
+    "aiPrompt": "natural full afro with rounded shape and voluminous coily texture",
+    "cardColor": "#9B59B6",
+    "cardBg": "#F3E5F9"
+  },
+  {
+    "id": "dreadlocks",
+    "name": "Dreadlocks",
+    "category": "textured",
+    "gender": "all",
+    "aiPrompt": "shoulder-length dreadlocks, neat and uniform, medium thickness",
+    "cardColor": "#9B59B6",
+    "cardBg": "#F3E5F9"
+  },
+  {
+    "id": "box_braids",
+    "name": "Box Braids",
+    "category": "textured",
+    "gender": "all",
+    "aiPrompt": "long black box braids past the shoulders, medium thickness, neat parts",
+    "cardColor": "#9B59B6",
+    "cardBg": "#F3E5F9"
+  },
+  {
+    "id": "cornrows",
+    "name": "Cornrows",
+    "category": "textured",
+    "gender": "all",
+    "aiPrompt": "tight cornrow braids going straight back from forehead, neat and defined rows",
+    "cardColor": "#9B59B6",
+    "cardBg": "#F3E5F9"
+  },
+  {
+    "id": "twist_out",
+    "name": "Twist Out",
+    "category": "textured",
+    "gender": "all",
+    "aiPrompt": "natural twist-out with defined springy coils and lots of volume",
+    "cardColor": "#9B59B6",
+    "cardBg": "#F3E5F9"
+  },
+  {
+    "id": "high_fade",
+    "name": "High Fade",
+    "category": "specialty",
+    "gender": "male",
+    "aiPrompt": "high skin fade with short textured top, sharp clean lines around the edges",
+    "cardColor": "#F39C12",
+    "cardBg": "#FEF5E7"
+  },
+  {
+    "id": "mohawk",
+    "name": "Mohawk",
+    "category": "specialty",
+    "gender": "all",
+    "aiPrompt": "mohawk with shaved sides and a strip of hair down the center styled upward",
+    "cardColor": "#F39C12",
+    "cardBg": "#FEF5E7"
+  },
+  {
+    "id": "man_bun",
+    "name": "Man Bun",
+    "category": "specialty",
+    "gender": "male",
+    "aiPrompt": "man bun with medium-length hair pulled back into a neat bun on top of the head",
+    "cardColor": "#F39C12",
+    "cardBg": "#FEF5E7"
+  },
+  {
+    "id": "space_buns",
+    "name": "Space Buns",
+    "category": "specialty",
+    "gender": "female",
+    "aiPrompt": "two symmetrical space buns on top of the head with loose wispy pieces framing the face",
+    "cardColor": "#F39C12",
+    "cardBg": "#FEF5E7"
+  }
+]

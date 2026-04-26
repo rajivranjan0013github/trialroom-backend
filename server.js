@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import authRoutes from './src/routes/authRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
+import hairstyleRoutes from './src/routes/hairstyleRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +43,7 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/v1', aiRoutes); // Priority
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/hairstyle', hairstyleRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
