@@ -8,6 +8,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
 import hairstyleRoutes from './src/routes/hairstyleRoutes.js';
+import revenuecatRoutes from './src/routes/revenuecatRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -44,6 +45,7 @@ app.use('/api/v1', aiRoutes); // Priority
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/hairstyle', hairstyleRoutes);
+app.use('/api/v1/revenuecat', revenuecatRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

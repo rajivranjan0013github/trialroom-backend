@@ -41,6 +41,30 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  isPremium: {
+    type: Boolean,
+    default: false,
+  },
+  premiumPlan: {
+    type: String,
+    default: null,
+  },
+  premiumExpiresAt: {
+    type: Date,
+    default: null,
+  },
+  rcOriginalAppUserId: {
+    type: String,
+    default: null,
+  },
+  premiumHistory: [
+    {
+      event: { type: String },
+      productId: { type: String },
+      timestamp: { type: Date, default: Date.now },
+      store: { type: String },
+    }
+  ],
   createdAt: {
     type: Date,
     default: Date.now
