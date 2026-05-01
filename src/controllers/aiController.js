@@ -106,7 +106,6 @@ export const removeBackground = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Image is required' });
     }
 
-    console.log('✨ Removing background with Gemini...');
     const processedBuffer = await removeBackgroundGemini(originalFile.buffer, originalFile.mimetype);
 
     const fileName = `processed/${Date.now()}-no-bg.png`;
@@ -133,7 +132,6 @@ export const modelifyController = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Image is required' });
     }
 
-    console.log('✨ Transforming into professional model...');
     const processedBuffer = await removeBackgroundGemini(originalFile.buffer, originalFile.mimetype);
 
     const fileName = `modelified/${Date.now()}-model.png`;
@@ -159,22 +157,14 @@ export const generateAvatar = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Reference image is required' });
     }
 
-    /* 
-    console.log('[Avatar] Generation started for user:', req.user, '| Image size:', file.size, 'bytes');
-    const generatedBuffer = await generateStandingAvatarOpenAI(file.buffer, file.mimetype);
-    console.log('[Avatar] Generation complete | Output size:', generatedBuffer.length, 'bytes');
-    */
-
-    console.log('[Avatar] Testing Mode: Simulating 20s delay...');
+   
     // Simulate generation time
     await new Promise(resolve => setTimeout(resolve, 20000));
 
-    console.log('[Avatar] Testing Mode: Using local output-image.png');
-    // For testing: read local file instead of calling AI
+  
     const imagePath = path.join(process.cwd(), 'img1.jpeg');
     const generatedBuffer = await fs.readFile(imagePath);
     
-    console.log('[Avatar] Generation complete (from local file) | Output size:', generatedBuffer.length, 'bytes');
     const imageBase64 = generatedBuffer.toString('base64');
 
     res.json({ status: 'Success', imageBase64 });

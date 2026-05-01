@@ -25,7 +25,6 @@ export const getMe = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const userId = req.user;
-    console.log('--- DELETE ACCOUNT REQUEST ---', userId);
     const publicDomain = process.env.R2_PUBLIC_DOMAIN?.replace(/\/$/, "") || "";
 
     // 1. Find the user and their fittings to collect image keys
@@ -54,7 +53,6 @@ export const deleteAccount = async (req, res) => {
 
     // 2. Batch delete from Cloudflare R2
     if (keysToDelete.length > 0) {
-      console.log(`[DeleteAccount] Cleaning up ${keysToDelete.length} images from R2...`);
       try {
         await s3Client.send(new DeleteObjectsCommand({
           Bucket: bucketName,
@@ -90,13 +88,7 @@ export const saveFCMToken = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    console.log('--- UPDATE PROFILE START ---');
-    console.log('User:', req.user);
-    console.log('Body Keys:', Object.keys(req.body || {}));
-    console.log('Slot 0:', req.body?.slot_0);
-    console.log('Slot 1:', req.body?.slot_1);
-    console.log('Files Keys:', req.files ? Object.keys(req.files) : 'No Files');
-    if (req.files?.images) console.log('Images Count:', req.files.images.length);
+  
 
     const body = req.body || {};
     const updateData = {};

@@ -22,7 +22,6 @@ async function generateImage() {
     const buffer = Buffer.from(b64Data, 'base64');
     fs.writeFileSync('mars_greenhouse.png', buffer);
 
-    console.log("Image saved successfully as mars_greenhouse.png");
   } catch (error) {
     console.error("Error generating image:", error);
   }

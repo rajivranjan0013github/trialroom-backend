@@ -21,7 +21,6 @@ async function getCachedDetection(hash) {
   try {
     const filePath = path.join(CACHE_DIR, `${hash}.json`);
     const data = await fs.readFile(filePath, 'utf-8');
-    console.log(`[Cache] HIT — returning cached detection for ${hash}`);
     return JSON.parse(data);
   } catch {
     return null;
@@ -33,7 +32,6 @@ async function saveCachedDetection(hash, result) {
     await fs.mkdir(CACHE_DIR, { recursive: true });
     const filePath = path.join(CACHE_DIR, `${hash}.json`);
     await fs.writeFile(filePath, JSON.stringify(result, null, 2));
-    console.log(`[Cache] SAVED detection result for ${hash}`);
   } catch (err) {
     console.warn('[Cache] Failed to save:', err.message);
   }
@@ -73,7 +71,6 @@ export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
   try {
     const imageFile = await toFile(fileBuffer, 'reference.jpg', { type: mimeType });
 
-    console.log('[OpenAI] Generating standing avatar via gpt-image-2...');
     const response = await openai.images.edit({
       model: 'gpt-image-2',
       image: [imageFile],
@@ -86,7 +83,6 @@ export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
     const b64 = response.data[0].b64_json;
     if (!b64) throw new Error('OpenAI did not return an image');
 
-    console.log('[OpenAI] Standing avatar generation complete');
     return Buffer.from(b64, 'base64');
   } catch (error) {
     console.error('Standing Avatar Generation Error:', error);
@@ -127,7 +123,6 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles, selecte
       ? `You are a virtual try-on AI. The first image is the person — preserve their face, exact skin tone, body, and identity exactly. Do not lighten, darken, or alter their skin tone in any way. From the second image, copy the pose and apply ONLY these specific clothing items to the person: ${itemList}. Do not change any other part of their outfit. Output a realistic full-body photo on a white background.`
       : `You are a virtual try-on AI. The first image is the person — preserve their face, exact skin tone, body, and identity exactly. Do not lighten, darken, or alter their skin tone in any way. From the second image, copy the complete outfit style and the pose. Output a realistic full-body photo on a white background.`;
 
-    console.log('[OpenAI] Calling gpt-image-1 for virtual try-on...');
     const response = await openai.images.edit({
       model: 'gpt-image-2',
       image: [...personFiles, ...outfitFileObjects],
@@ -141,7 +136,6 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles, selecte
     if (!b64) throw new Error('OpenAI did not return an image');
     const buffer = Buffer.from(b64, 'base64');
 
-    console.log('[OpenAI] gpt-image-1 generation complete');
     return buffer;
   } catch (error) {
     console.error('OpenAI Style Transfer Error:', error);

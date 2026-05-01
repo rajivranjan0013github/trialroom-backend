@@ -8,9 +8,7 @@ async function main() {
     const inputPath = '/Volumes/SSD500/Rajiv/Project/Trail-Room-Backend/image2.jpg';
     const outputPath = '/Volumes/SSD500/Rajiv/Project/Trail-Room-Backend/img2-no-bg.png';
 
-    console.log(`📂 Loading image from: ${inputPath}`);
-
-    console.log('⏳ Removing background (this may take a moment)...');
+  
     
     const config = {
       output: {
@@ -25,7 +23,6 @@ async function main() {
 
     await fs.writeFile(outputPath, resultBuffer);
     
-    console.log(`✅ Success! Saved to: ${outputPath}`);
   } catch (error) {
     console.error('❌ Error:', error);
   }

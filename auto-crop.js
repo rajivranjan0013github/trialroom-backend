@@ -6,13 +6,11 @@ async function autoCrop() {
     const inputPath = '/Volumes/SSD500/Rajiv/Project/Trail-Room-Backend/img2-no-bg.png';
     const outputPath = '/Volumes/SSD500/Rajiv/Project/Trail-Room-Backend/output-cropped.png';
 
-    console.log(`📂 Processing: ${inputPath}`);
 
     const image = sharp(inputPath);
     const metadata = await image.metadata();
 
     // 1. Detect tight boundaries
-    console.log('⏳ Detecting boundaries...');
     const { data: trimmedBuffer, info: trimmedInfo } = await image
       .trim({ threshold: 30 }) 
       .toBuffer({ resolveWithObject: true });
@@ -50,7 +48,6 @@ async function autoCrop() {
     const padTop = marginV + Math.floor(extraHeight / 2);
     const padBottom = finalHeight - trimmedInfo.height - padTop;
 
-    console.log(`📐 Adjusting to 4:5 aspect ratio with 1% bottom margin...`);
     
     // 6. Extend and Flatten (Add White Background)
     const finalImage = await sharp(trimmedBuffer)
@@ -72,17 +69,14 @@ async function autoCrop() {
       Math.min(1000, ((trimmedInfo.trimOffsetLeft + trimmedInfo.width + padRight) / metadata.width) * 1000)
     ];
 
-    console.log('✅ Auto-Crop Coordinates (0-1000):', box_2d);
-    console.log(`📏 Original: ${metadata.width}x${metadata.height} -> Final (4:5): ${finalImage.info.width}x${finalImage.info.height}`);
+  
 
     // Save the final buffer
     await sharp(finalImage.data).toFile(outputPath);
     
-    console.log(`💾 4:5 cropped image saved to: ${outputPath}`);
   } catch (error) {
     console.error('❌ Error during auto-crop:', error.message);
     if (error.message.includes('Input Buffer is empty')) {
-       console.log('💡 Tip: Make sure output-no-bg.png exists and has a transparent background.');
     }
   }
 }

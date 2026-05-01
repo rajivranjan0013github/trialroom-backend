@@ -16,7 +16,6 @@ export const generateHairstyleTryOn = async (faceBuffer, faceMime, refBuffer, re
   const faceFile = await toFile(faceBuffer, 'face.jpg', { type: faceMime });
   const refFile  = await toFile(refBuffer,  'ref.jpg',  { type: refMime });
 
-  console.log('[Hairstyle] Generating via gpt-image-2 with reference image...');
 
   const response = await openai.images.edit({
     model: 'gpt-image-2',
@@ -30,6 +29,5 @@ export const generateHairstyleTryOn = async (faceBuffer, faceMime, refBuffer, re
   const b64 = response.data[0].b64_json;
   if (!b64) throw new Error('OpenAI did not return an image');
 
-  console.log('[Hairstyle] Generation complete');
   return Buffer.from(b64, 'base64');
 };
