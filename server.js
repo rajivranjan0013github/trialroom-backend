@@ -37,7 +37,7 @@ app.use('/static', express.static(process.cwd()));
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('🍃 Connected to MongoDB'))
+  .then(() => {})
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Register Routes
@@ -54,8 +54,8 @@ app.get('/health', (req, res) => {
 
 // JSON 404 Handler - Strengthened (Express 5 compatible)
 app.use((req, res) => {
-  res.status(404).json({ 
-    status: 'Error', 
+  res.status(404).json({
+    status: 'Error',
     message: `Route ${req.method} ${req.originalUrl} not found`,
     hint: 'Ensure you are using the correct method and path'
   });
@@ -64,18 +64,13 @@ app.use((req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('SERVER ERROR:', err.stack);
-  res.status(500).json({ 
-    status: 'Error', 
+  res.status(500).json({
+    status: 'Error',
     message: 'Internal Server Error',
     detail: err.message
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`
-  🚀 TrailRoom Backend Refactored & Running!
-  📡 Port: ${PORT}
-  🌍 Environment: ${process.env.NODE_ENV}
-  ✨ Routes Registered: /api/v1/remove-bg, /api/v1/modelify, etc.
-  `);
+ 
 });

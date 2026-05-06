@@ -157,14 +157,13 @@ export const generateAvatar = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Reference image is required' });
     }
 
-   
-    // Simulate generation time
-    await new Promise(resolve => setTimeout(resolve, 20000));
+    const generatedBuffer = await generateStandingAvatarOpenAI(file.buffer, file.mimetype);
+      // Simulate generation time
+    // await new Promise(resolve => setTimeout(resolve, 20000));
 
   
-    const imagePath = path.join(process.cwd(), 'img1.jpeg');
-    const generatedBuffer = await fs.readFile(imagePath);
-    
+    // const imagePath = path.join(process.cwd(), 'img1.jpeg');
+   // const generatedBuffer = await fs.readFile(imagePath);
     const imageBase64 = generatedBuffer.toString('base64');
 
     res.json({ status: 'Success', imageBase64 });

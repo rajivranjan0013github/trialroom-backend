@@ -21,6 +21,9 @@ function getAppleSigningKey(header, callback) {
 export const googleLogin = async (req, res) => {
   try {
     const { credential } = req.body;
+
+
+
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: [
@@ -30,15 +33,22 @@ export const googleLogin = async (req, res) => {
     });
     const { name, email, sub: googleId } = ticket.getPayload();
 
+
     let user = await User.findOne({ googleId });
     if (!user) {
+
       user = await User.create({ name, email, googleId });
+
+    } else {
+
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
     res.json({ status: 'Success', token, user });
   } catch (error) {
-    console.error('Auth Error:', error);
+    console.error('[AUTH-CTRL] googleLogin ERROR:', error.message);
+    console.error('[AUTH-CTRL] Stack:', error.stack?.substring(0, 500));
     res.status(400).json({ status: 'Error', message: 'Google authentication failed', detail: error.message });
   }
 };
@@ -47,9 +57,12 @@ export const appleLogin = async (req, res) => {
   try {
     const { idToken, displayName, email: providedEmail } = req.body;
 
+
     if (!idToken) {
+
       return res.status(400).json({ error: 'Identity token is required' });
     }
+
 
     const decodedToken = await new Promise((resolve, reject) => {
       jwt.verify(
@@ -70,23 +83,31 @@ export const appleLogin = async (req, res) => {
     const appleId = decodedToken.sub;
     const resolvedEmail = decodedToken.email || providedEmail;
 
+
     if (!resolvedEmail) {
+
       return res.status(400).json({ error: 'Email is required. Please try signing in again.' });
     }
 
     let user = await User.findOne({ googleId: `apple:${appleId}` });
     if (!user) {
+
       user = await User.create({
         name: displayName || resolvedEmail.split('@')[0] || 'Apple User',
         email: resolvedEmail,
         googleId: `apple:${appleId}`,
       });
+
+    } else {
+
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
     res.json({ status: 'Success', token, user });
   } catch (error) {
-    console.error('Apple Auth Error:', error.message);
+    console.error('[AUTH-CTRL] appleLogin ERROR:', error.message);
+    console.error('[AUTH-CTRL] Stack:', error.stack?.substring(0, 500));
     res.status(401).json({ status: 'Error', message: 'Apple authentication failed', detail: error.message });
   }
 };
