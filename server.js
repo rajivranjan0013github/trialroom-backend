@@ -30,7 +30,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve local files for mock/dev testing (avoids R2 upload round-trips)
 app.use('/static', express.static(process.cwd()));

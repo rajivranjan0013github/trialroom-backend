@@ -54,7 +54,7 @@ Pose details:
 - Arms relaxed (one arm naturally by the side or lightly bent)
 - Hands in a natural position (not stiff or posed)
 - Legs slightly apart or one leg slightly forward for balance
-- Head slightly tilted or facing forward
+- Head slightly tilted or facing forwar
 
 Expression:
 - Soft, casual expression with a slight natural smile (not serious)
@@ -93,8 +93,16 @@ export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
 export const generateFittingImageMulti = async (personUrls, outfitFiles, selectedItems = []) => {
   try {
     // 1. Fetch person reference images from URLs
-    console.log("generatefittingimage")
     const personBuffers = await Promise.all(personUrls.map(async (url) => {
+      // Handle Base64 Data URLs (often sent during instant preview)
+      if (url.startsWith('data:')) {
+        const [meta, data] = url.split(',');
+        const mimeType = meta.split(':')[1].split(';')[0];
+        const buffer = Buffer.from(data, 'base64');
+        return { buffer, mimeType };
+      }
+
+      // Handle standard HTTP/HTTPS URLs
       const response = await fetch(url);
       if (!response.ok) return null;
       const arrayBuffer = await response.arrayBuffer();

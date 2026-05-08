@@ -22,6 +22,9 @@ const hairstyleFittingSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  hairstyleRefUrl: {
+    type: String,
+  },
   resultImage: {
     type: String,
     required: true,

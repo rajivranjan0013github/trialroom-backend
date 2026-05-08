@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Fitting from '../models/Fitting.js';
+import HairstyleFitting from '../models/HairstyleFitting.js';
 import { DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../utils/s3Config.js';
 
@@ -17,8 +18,19 @@ export const getMe = async (req, res) => {
     const user = await User.findById(req.user);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    const [outfitCount, hairstyleCount, favoriteOutfits, favoriteHair] = await Promise.all([
+      Fitting.countDocuments({ user: req.user }),
+      HairstyleFitting.countDocuments({ user: req.user }),
+      Fitting.countDocuments({ user: req.user, isFavorite: true }),
+      HairstyleFitting.countDocuments({ user: req.user, isFavorite: true })
+    ]);
+
     const userObj = user.toObject();
     userObj.freeGenerationsRemaining = user.isPremium ? null : Math.max(0, 2 - (user.freeGenerationsUsed ?? 0));
+    
+    // Add accurate counts
+    userObj.tryOnsCount = outfitCount + hairstyleCount;
+    userObj.favoritesCount = favoriteOutfits + favoriteHair;
 
     res.json(userObj);
   } catch (error) {

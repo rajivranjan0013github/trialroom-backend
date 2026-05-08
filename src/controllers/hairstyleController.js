@@ -1,7 +1,9 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../utils/s3Config.js';
 import HairstyleFitting from '../models/HairstyleFitting.js';
+import User from '../models/User.js';
 import { generateHairstyleTryOn } from '../services/hairstyleService.js';
+import { sendPushNotification } from '../services/notificationService.js';
 
 export const tryOnHairstyle = async (req, res) => {
   try {
@@ -35,6 +37,11 @@ export const tryOnHairstyle = async (req, res) => {
     // ── Generate ──
     const resultBuffer = await generateHairstyleTryOn(faceBuffer, faceMime, refFile.buffer, refFile.mimetype);
 
+    // ── Upload hairstyle reference ──
+    const refKey = `hairstyle-refs/${Date.now()}-ref.jpg`;
+    await s3Client.send(new PutObjectCommand({ Bucket: bucketName, Key: refKey, Body: refFile.buffer, ContentType: refFile.mimetype }));
+    const refUrl = `${process.env.R2_PUBLIC_DOMAIN}/${refKey}`;
+
     // ── Upload result ──
     const resultKey = `hairstyle-results/${Date.now()}-result.png`;
     await s3Client.send(new PutObjectCommand({ Bucket: bucketName, Key: resultKey, Body: resultBuffer, ContentType: 'image/png' }));
@@ -47,8 +54,25 @@ export const tryOnHairstyle = async (req, res) => {
       hairstyleId: 'custom',
       hairstyleName: 'Custom Reference',
       hairstyleCategory: 'custom',
+      hairstyleRefUrl: refUrl,
       resultImage: resultUrl,
     });
+
+    // ── Send Push Notification ──
+    try {
+      const userDoc = await User.findById(req.user);
+      if (userDoc?.fcmToken) {
+        await sendPushNotification(
+          userDoc.fcmToken,
+          "New Look Ready! ✨",
+          "Your hairstyle try-on is complete. Come check out your new look!",
+          resultUrl,
+          "history"
+        );
+      }
+    } catch (pushErr) {
+      console.error('[Hairstyle] Push notification failed:', pushErr);
+    }
 
     res.json({ status: 'Success', resultImageUrl: resultUrl, faceImageUrl: resolvedFaceUrl, fittingId: fitting._id });
   } catch (error) {
