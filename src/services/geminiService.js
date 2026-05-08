@@ -93,6 +93,7 @@ export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
 export const generateFittingImageMulti = async (personUrls, outfitFiles, selectedItems = []) => {
   try {
     // 1. Fetch person reference images from URLs
+    console.log("generatefittingimage")
     const personBuffers = await Promise.all(personUrls.map(async (url) => {
       const response = await fetch(url);
       if (!response.ok) return null;
@@ -146,9 +147,7 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles, selecte
 export const detectFashionItems = async (fileBuffer, mimeType) => {
   try {
     // Check cache first
-    const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-    const cached = await getCachedDetection(hash);
-    if (cached) return cached;
+   
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-3-flash-preview',
@@ -189,8 +188,6 @@ export const detectFashionItems = async (fileBuffer, mimeType) => {
     const text = response.text();
     const parsed = JSON.parse(text);
 
-    // Save to cache
-    await saveCachedDetection(hash, parsed);
 
     return parsed;
   } catch (error) {

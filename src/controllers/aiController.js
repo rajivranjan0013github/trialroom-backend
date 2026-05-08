@@ -2,6 +2,7 @@ import { generateFittingImageMulti, detectFashionItems, removeBackgroundGemini, 
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3Client, { bucketName } from '../utils/s3Config.js';
 import Fitting from '../models/Fitting.js';
+import User from '../models/User.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -57,11 +58,23 @@ export const generateFitting = async (req, res) => {
       resultImage: resultUrl,
     });
 
+    // 5. Increment generation count for all users; limit is only enforced for free users
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user,
+      { $inc: { generationsUsed: 1 } },
+      { new: true }
+    );
+
+    const generationsUsed = updatedUser?.generationsUsed ?? 0;
+    const freeGenerationsRemaining = updatedUser?.isPremium ? null : Math.max(0, 2 - generationsUsed);
+
     res.json({
       status: 'Success',
       imageUrl: resultUrl,
       outfitUrls,
       data: newFitting,
+      generationsUsed,
+      freeGenerationsRemaining,
     });
   } catch (error) {
     console.error('Generation Error:', error);
@@ -157,13 +170,14 @@ export const generateAvatar = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Reference image is required' });
     }
 
-    const generatedBuffer = await generateStandingAvatarOpenAI(file.buffer, file.mimetype);
+   // const generatedBuffer = await generateStandingAvatarOpenAI(file.buffer, file.mimetype);
       // Simulate generation time
-    // await new Promise(resolve => setTimeout(resolve, 20000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
   
-    // const imagePath = path.join(process.cwd(), 'img1.jpeg');
-   // const generatedBuffer = await fs.readFile(imagePath);
+    const imagePath = path.join(process.cwd(), 'img1.jpeg');
+   const generatedBuffer = await fs.readFile(imagePath);
+   console.log(generatedBuffer,"generatedBuffer")
     const imageBase64 = generatedBuffer.toString('base64');
 
     res.json({ status: 'Success', imageBase64 });

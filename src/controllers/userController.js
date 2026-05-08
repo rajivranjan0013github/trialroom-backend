@@ -16,7 +16,11 @@ export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+
+    const userObj = user.toObject();
+    userObj.freeGenerationsRemaining = user.isPremium ? null : Math.max(0, 2 - (user.freeGenerationsUsed ?? 0));
+
+    res.json(userObj);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

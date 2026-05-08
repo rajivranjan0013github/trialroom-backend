@@ -65,6 +65,10 @@ const userSchema = new mongoose.Schema({
       store: { type: String },
     }
   ],
+  generationsUsed: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now
