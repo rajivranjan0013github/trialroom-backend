@@ -1,8 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI, { toFile } from 'openai';
-import crypto from 'crypto';
-import fs from 'fs/promises';
-import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -13,30 +10,6 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// ── Detection Cache (saves Gemini API costs during dev/testing) ──
-const CACHE_DIR = path.join(process.cwd(), '.cache', 'detections');
-
-async function getCachedDetection(hash) {
-  try {
-    const filePath = path.join(CACHE_DIR, `${hash}.json`);
-    const data = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-async function saveCachedDetection(hash, result) {
-  try {
-    await fs.mkdir(CACHE_DIR, { recursive: true });
-    const filePath = path.join(CACHE_DIR, `${hash}.json`);
-    await fs.writeFile(filePath, JSON.stringify(result, null, 2));
-  } catch (err) {
-    console.warn('[Cache] Failed to save:', err.message);
-  }
-}
-
 
 const STANDING_POSE_PROMPT = `Using the provided reference image, generate a realistic full-body image of the same person.
 
@@ -93,7 +66,8 @@ export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
 export const generateFittingImageMulti = async (personUrls, outfitFiles, selectedItems = []) => {
   try {
     // 1. Fetch person reference images from URLs
-    const personBuffers = await Promise.all(personUrls.map(async (url) => {
+    const personBuffers = await Promise.all(personUrls.slice(0, 1).map(async (url) => {
+      if (!url) return null;
       // Handle Base64 Data URLs (often sent during instant preview)
       if (url.startsWith('data:')) {
         const [meta, data] = url.split(',');
@@ -154,8 +128,6 @@ export const generateFittingImageMulti = async (personUrls, outfitFiles, selecte
 
 export const detectFashionItems = async (fileBuffer, mimeType) => {
   try {
-    // Check cache first
-   
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-3-flash-preview',

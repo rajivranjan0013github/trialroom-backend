@@ -116,6 +116,7 @@ export const updateProfile = async (req, res) => {
     if (body.name) updateData.name = body.name;
     if (body.height) updateData.height = Number(body.height);
     if (body.weight) updateData.weight = Number(body.weight);
+    if (body.fcmToken) updateData.fcmToken = body.fcmToken;
 
     // Reconstruct the 4-slot profileSetup array from the slot manifest
     let newFileIndex = 0;

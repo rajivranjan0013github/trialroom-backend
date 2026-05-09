@@ -4,7 +4,12 @@ import auth from '../middleware/auth.js';
 import checkGenerationLimit from '../middleware/checkGenerationLimit.js';
 import multer from 'multer';
 
-const memoryUpload = multer({ storage: multer.memoryStorage() });
+const memoryUpload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fieldSize: 10 * 1024 * 1024, // 10MB limit for text fields
+  }
+});
 const router = express.Router();
 
 router.post('/generate', auth, checkGenerationLimit, memoryUpload.array('outfitImages', 4), generateFitting);

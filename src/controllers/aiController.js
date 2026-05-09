@@ -165,6 +165,7 @@ export const modelifyController = async (req, res) => {
 export const generateAvatar = async (req, res) => {
   try {
     const file = req.file;
+    const { height, weight } = req.body;
     if (!file) {
       return res.status(400).json({ status: 'Error', message: 'Reference image is required' });
     }
@@ -208,9 +209,13 @@ export const generateAvatar = async (req, res) => {
         const avatarUrl = `${publicDomain}/${avatarFileName}`;
 
         // Update user profileSetup in DB
+        const updateData = { $set: { profileSetup: [avatarUrl, originalUrl] } };
+        if (height) updateData.$set.height = Number(height);
+        if (weight) updateData.$set.weight = Number(weight);
+
         const updatedUser = await User.findByIdAndUpdate(
           req.user,
-          { $set: { profileSetup: [avatarUrl, originalUrl] } },
+          updateData,
           { new: true }
         );
 

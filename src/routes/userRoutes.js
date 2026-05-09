@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.get('/all',  getAllUsers);
 router.get('/me', auth, getMe);
+router.patch('/me', auth, updateProfile);
 router.post('/', auth, upload.fields([{ name: 'images', maxCount: 4 }, { name: 'avatar', maxCount: 1 }]), updateProfile);
 router.patch('/fcm-token', auth, saveFCMToken);
 router.delete('/me', auth, deleteAccount);
