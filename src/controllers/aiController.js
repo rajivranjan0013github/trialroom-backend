@@ -129,7 +129,7 @@ export const detectOutfits = async (req, res) => {
       status: 'Success',
       data: detectionResult.items,
       suggestedTitle: detectionResult.suggestedTitle,
-      category: detectionResult.category,
+      category: detectionResult.category
     });
   } catch (error) {
     console.error('Detection Error:', error);
