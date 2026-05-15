@@ -49,7 +49,7 @@ export const generateStandingAvatarOpenAI = async (fileBuffer, mimeType) => {
       image: [imageFile],
       prompt: STANDING_POSE_PROMPT,
       n: 1,
-      size: '1024x1024',
+      size: '1024x1536',
       quality: 'low',
     });
 
@@ -133,6 +133,7 @@ export const detectFashionItems = async (fileBuffer, mimeType) => {
       model: 'gemini-3-flash-preview',
       generationConfig: {
         responseMimeType: "application/json",
+        // thinkingConfig: { thinkingBudget: 0 },
       }
     });
 

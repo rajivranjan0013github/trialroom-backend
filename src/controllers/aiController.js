@@ -21,82 +21,126 @@ export const generateFitting = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Person References and Outfit Images are required' });
     }
 
-    // 1. Upload outfit images to R2
-    const outfitUrls = await Promise.all(outfitFiles.map(async (file) => {
-      const fileName = `outfits/${Date.now()}-${file.originalname}`;
-      await s3Client.send(new PutObjectCommand({
-        Bucket: bucketName,
-        Key: fileName,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      }));
-      return `${process.env.R2_PUBLIC_DOMAIN}/${fileName}`;
-    }));
-
-    // 2. Generate fitting image via OpenAI
-    const generatedBuffer = await generateFittingImageMulti(urls, outfitFiles, selectedItems);
-
-    // 3. Upload AI result to R2
-    const resultFileName = `results/${Date.now()}-fitting.png`;
-    await s3Client.send(new PutObjectCommand({
-      Bucket: bucketName,
-      Key: resultFileName,
-      Body: generatedBuffer,
-      ContentType: 'image/png',
-    }));
-    const resultUrl = `${process.env.R2_PUBLIC_DOMAIN}/${resultFileName}`;
-
-    // 4. Save to database
+    // 1. Initial save to DB as 'pending'
     const newFitting = await Fitting.create({
       user: req.user,
       personReferences: urls,
-      outfitImages: outfitUrls,
+      outfitImages: [], // Will populate in background
       detectedItems,
       selectedItems,
       title,
       category,
-      resultImage: resultUrl,
+      status: 'pending'
     });
 
-    // 5. Increment generation count and fetch user for notification
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user,
-      { $inc: { generationsUsed: 1 } },
-      { new: true }
-    );
+    // 2. Return taskId immediately
+    res.json({
+      status: 'Success',
+      message: 'Generation started',
+      taskId: newFitting._id
+    });
 
-    // 6. Send Push Notification
-    if (updatedUser?.fcmToken) {
-      await sendPushNotification(
-        updatedUser.fcmToken,
-        "Your Look is Ready! ✨",
-        "The virtual try-on is complete. Tap to see your new style!",
-        resultUrl,
-        "history"
-      );
+    // 3. Process in background
+    (async () => {
+      try {
+        // A. Upload outfit images to R2
+        const outfitUrls = await Promise.all(outfitFiles.map(async (file) => {
+          const fileName = `outfits/${Date.now()}-${file.originalname}`;
+          await s3Client.send(new PutObjectCommand({
+            Bucket: bucketName,
+            Key: fileName,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+          }));
+          return `${process.env.R2_PUBLIC_DOMAIN}/${fileName}`;
+        }));
+
+        // B. Generate fitting image
+        const generatedBuffer = await generateFittingImageMulti(urls, outfitFiles, selectedItems);
+
+        // C. Upload AI result to R2
+        const resultFileName = `results/${Date.now()}-fitting.png`;
+        await s3Client.send(new PutObjectCommand({
+          Bucket: bucketName,
+          Key: resultFileName,
+          Body: generatedBuffer,
+          ContentType: 'image/png',
+        }));
+        const resultUrl = `${process.env.R2_PUBLIC_DOMAIN}/${resultFileName}`;
+
+        // D. Update database entry
+        const updatedUser = await User.findByIdAndUpdate(req.user, { $inc: { generationsUsed: 1 } }, { new: true });
+        
+        await Fitting.findByIdAndUpdate(newFitting._id, {
+          outfitImages: outfitUrls,
+          resultImage: resultUrl,
+          status: 'completed'
+        });
+
+        // E. Send Push Notification
+        if (updatedUser?.fcmToken) {
+          await sendPushNotification(
+            updatedUser.fcmToken,
+            "Your Look is Ready! ✨",
+            "The virtual try-on is complete. Tap to see your new style!",
+            resultUrl,
+            "history"
+          );
+        }
+      } catch (bgError) {
+        console.error('[FittingBG] Generation failed:', bgError);
+        await Fitting.findByIdAndUpdate(newFitting._id, {
+          status: 'failed',
+          error: bgError.message
+        });
+
+        // Notify user about the failure
+        const updatedUser = await User.findById(req.user);
+        if (updatedUser?.fcmToken) {
+          await sendPushNotification(
+            updatedUser.fcmToken,
+            "Generation Failed ❌",
+            bgError.message || "Something went wrong while crafting your look. Please try again.",
+            null,
+            "history_fail"
+          );
+        }
+      }
+    })();
+
+  } catch (error) {
+    console.error('Generation Entry Error:', error);
+    res.status(500).json({ status: 'Error', message: 'Failed to start generation' });
+  }
+};
+
+export const getTaskStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const task = await Fitting.findOne({ _id: id, user: req.user });
+    
+    if (!task) {
+      return res.status(404).json({ status: 'Error', message: 'Task not found' });
     }
-
-    const generationsUsed = updatedUser?.generationsUsed ?? 0;
-    const freeGenerationsRemaining = updatedUser?.isPremium ? null : Math.max(0, 2 - generationsUsed);
 
     res.json({
       status: 'Success',
-      imageUrl: resultUrl,
-      outfitUrls,
-      data: newFitting,
-      generationsUsed,
-      freeGenerationsRemaining,
+      data: {
+        id: task._id,
+        taskStatus: task.status, // 'pending', 'completed', 'failed'
+        resultImage: task.resultImage,
+        error: task.error
+      }
     });
   } catch (error) {
-    console.error('Generation Error:', error);
-    res.status(500).json({ status: 'Error', message: 'Generation failed', detail: error.message });
+    res.status(500).json({ status: 'Error', message: error.message });
   }
 };
 
 export const getFittingHistory = async (req, res) => {
   try {
     const [outfitHistory, hairstyleHistory] = await Promise.all([
-      Fitting.find({ user: req.user }),
+      Fitting.find({ user: req.user, status: 'completed' }),
       HairstyleFitting.find({ user: req.user })
     ]);
     

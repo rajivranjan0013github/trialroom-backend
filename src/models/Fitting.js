@@ -24,7 +24,16 @@ const fittingSchema = new mongoose.Schema({
   category: String,
   resultImage: {
     type: String, // Final AI result
-    required: true
+    required: false
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'failed'],
+    default: 'pending'
+  },
+  error: {
+    type: String,
+    default: null
   },
   isFavorite: {
     type: Boolean,
