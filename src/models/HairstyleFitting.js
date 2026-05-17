@@ -27,7 +27,15 @@ const hairstyleFittingSchema = new mongoose.Schema({
   },
   resultImage: {
     type: String,
-    required: true,
+    required: false,
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'failed'],
+    default: 'completed', // For existing records
+  },
+  error: {
+    type: String,
   },
   isFavorite: {
     type: Boolean,

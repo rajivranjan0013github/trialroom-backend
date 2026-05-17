@@ -15,7 +15,7 @@ export const tryOnHairstyle = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'hairstyleRef image is required' });
     }
 
-    // ── Resolve face buffer ──
+    // ── Pre-process: Upload reference images before starting background task ──
     let faceBuffer, faceMime, resolvedFaceUrl;
 
     if (faceFile) {
@@ -34,20 +34,12 @@ export const tryOnHairstyle = async (req, res) => {
       return res.status(400).json({ status: 'Error', message: 'Either faceImageUrl or faceImage file is required' });
     }
 
-    // ── Generate ──
-    const resultBuffer = await generateHairstyleTryOn(faceBuffer, faceMime, refFile.buffer, refFile.mimetype);
-
-    // ── Upload hairstyle reference ──
+    // Upload hairstyle reference
     const refKey = `hairstyle-refs/${Date.now()}-ref.jpg`;
     await s3Client.send(new PutObjectCommand({ Bucket: bucketName, Key: refKey, Body: refFile.buffer, ContentType: refFile.mimetype }));
     const refUrl = `${process.env.R2_PUBLIC_DOMAIN}/${refKey}`;
 
-    // ── Upload result ──
-    const resultKey = `hairstyle-results/${Date.now()}-result.png`;
-    await s3Client.send(new PutObjectCommand({ Bucket: bucketName, Key: resultKey, Body: resultBuffer, ContentType: 'image/png' }));
-    const resultUrl = `${process.env.R2_PUBLIC_DOMAIN}/${resultKey}`;
-
-    // ── Save to DB ──
+    // ── Create Pending Entry ──
     const fitting = await HairstyleFitting.create({
       user: req.user,
       faceImageUrl: resolvedFaceUrl,
@@ -55,26 +47,64 @@ export const tryOnHairstyle = async (req, res) => {
       hairstyleName: 'Custom Reference',
       hairstyleCategory: 'custom',
       hairstyleRefUrl: refUrl,
-      resultImage: resultUrl,
+      status: 'pending'
     });
 
-    // ── Send Push Notification ──
-    try {
-      const userDoc = await User.findById(req.user);
-      if (userDoc?.fcmToken) {
-        await sendPushNotification(
-          userDoc.fcmToken,
-          "New Look Ready! ✨",
-          "Your hairstyle try-on is complete. Come check out your new look!",
-          resultUrl,
-          "history"
-        );
-      }
-    } catch (pushErr) {
-      console.error('[Hairstyle] Push notification failed:', pushErr);
-    }
+    // Return taskId immediately
+    res.json({ 
+      status: 'Success', 
+      message: 'Generation started', 
+      taskId: fitting._id 
+    });
 
-    res.json({ status: 'Success', resultImageUrl: resultUrl, faceImageUrl: resolvedFaceUrl, fittingId: fitting._id });
+    // ── Background Generation ──
+    (async () => {
+      try {
+        const resultBuffer = await generateHairstyleTryOn(faceBuffer, faceMime, refFile.buffer, refFile.mimetype);
+
+        // Upload result
+        const resultKey = `hairstyle-results/${Date.now()}-result.png`;
+        await s3Client.send(new PutObjectCommand({ Bucket: bucketName, Key: resultKey, Body: resultBuffer, ContentType: 'image/png' }));
+        const resultUrl = `${process.env.R2_PUBLIC_DOMAIN}/${resultKey}`;
+
+        // Update DB
+        await HairstyleFitting.findByIdAndUpdate(fitting._id, {
+          resultImage: resultUrl,
+          status: 'completed'
+        });
+
+        // Notify user
+        const userDoc = await User.findById(req.user);
+        if (userDoc?.fcmToken) {
+          await sendPushNotification(
+            userDoc.fcmToken,
+            "New Look Ready! ✨",
+            "Your hairstyle try-on is complete. Come check out your new look!",
+            resultUrl,
+            "hairstyle_complete"
+          );
+        }
+      } catch (error) {
+        console.error('[HairstyleBG] Try-on failed:', error);
+        await HairstyleFitting.findByIdAndUpdate(fitting._id, {
+          status: 'failed',
+          error: error.message
+        });
+
+        // Notify failure
+        const userDoc = await User.findById(req.user);
+        if (userDoc?.fcmToken) {
+          await sendPushNotification(
+            userDoc.fcmToken,
+            "Generation Failed ❌",
+            error.message || "Something went wrong with your hairstyle generation.",
+            null,
+            "hairstyle_fail"
+          );
+        }
+      }
+    })();
+
   } catch (error) {
     console.error('[Hairstyle] Try-on error:', error);
     res.status(500).json({ status: 'Error', message: 'Hairstyle try-on failed', detail: error.message });

@@ -117,8 +117,13 @@ export const generateFitting = async (req, res) => {
 export const getTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const task = await Fitting.findOne({ _id: id, user: req.user });
+    let task = await Fitting.findOne({ _id: id, user: req.user });
     
+    if (!task) {
+      // Try searching in HairstyleFitting
+      task = await HairstyleFitting.findOne({ _id: id, user: req.user });
+    }
+
     if (!task) {
       return res.status(404).json({ status: 'Error', message: 'Task not found' });
     }
