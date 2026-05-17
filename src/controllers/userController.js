@@ -26,7 +26,7 @@ export const getMe = async (req, res) => {
     ]);
 
     const userObj = user.toObject();
-    userObj.freeGenerationsRemaining = user.isPremium ? null : Math.max(0, 2 - (user.freeGenerationsUsed ?? 0));
+    userObj.freeGenerationsRemaining = user.isPremium ? null : Math.max(0, 2 - (user.generationsUsed ?? 0));
     
     // Add accurate counts
     userObj.tryOnsCount = outfitCount + hairstyleCount;

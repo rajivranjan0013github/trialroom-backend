@@ -27,10 +27,15 @@ Pose details:
 - Arms relaxed (one arm naturally by the side or lightly bent)
 - Hands in a natural position (not stiff or posed)
 - Legs slightly apart or one leg slightly forward for balance
-- Head slightly tilted or facing forwar
+- Head slightly tilted or facing forward
 
 Expression:
 - Soft, casual expression with a slight natural smile (not serious)
+
+Framing & Composition:
+- Crucial: The person must be perfectly centered and occupy the full vertical height of the image frame from head to toe (roughly 85-90% of the image height).
+- If the reference image was taken from a long distance, zoom in and scale up the person so they are a prominent, clear, close-up full-body shot. Do not render them as a small, tiny, or distant figure.
+- The top of the head should be positioned close to the top of the frame, and the feet should be positioned close to the bottom of the frame, fully visible.
 
 Style:
 - Realistic, candid photography feel (not studio stiff)

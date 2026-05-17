@@ -68,16 +68,17 @@ export const tryOnHairstyle = async (req, res) => {
         const resultUrl = `${process.env.R2_PUBLIC_DOMAIN}/${resultKey}`;
 
         // Update DB
+        const updatedUser = await User.findByIdAndUpdate(req.user, { $inc: { generationsUsed: 1 } }, { new: true });
+
         await HairstyleFitting.findByIdAndUpdate(fitting._id, {
           resultImage: resultUrl,
           status: 'completed'
         });
 
         // Notify user
-        const userDoc = await User.findById(req.user);
-        if (userDoc?.fcmToken) {
+        if (updatedUser?.fcmToken) {
           await sendPushNotification(
-            userDoc.fcmToken,
+            updatedUser.fcmToken,
             "New Look Ready! ✨",
             "Your hairstyle try-on is complete. Come check out your new look!",
             resultUrl,

@@ -134,7 +134,10 @@ export const getTaskStatus = async (req, res) => {
         id: task._id,
         taskStatus: task.status, // 'pending', 'completed', 'failed'
         resultImage: task.resultImage,
-        error: task.error
+        error: task.error,
+        outfitImages: task.outfitImages || [],
+        refImage: task.refImage || null,
+        faceImage: task.faceImage || null
       }
     });
   } catch (error) {

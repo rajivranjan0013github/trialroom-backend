@@ -22,7 +22,7 @@ export const generateHairstyleTryOn = async (faceBuffer, faceMime, refBuffer, re
     image: [faceFile, refFile],
     prompt: PROMPT,
     n: 1,
-    size: '1024x1024',
+    size: '1024x1536',
     quality: 'low',
   });
 
